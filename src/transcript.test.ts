@@ -37,8 +37,8 @@ test("captions win and a silent video has no transcript", async () => {
 });
 
 test("the API transcribes a video once, caches the lines, and needs a key", async () => {
-  process.env.XDG_CACHE_HOME = await mkdtemp(join(tmpdir(), "video-tool-cache-"));
-  const file = join(await mkdtemp(join(tmpdir(), "video-tool-")), "tone.mp4");
+  process.env.XDG_CACHE_HOME = await mkdtemp(join(tmpdir(), "videoscrub-cache-"));
+  const file = join(await mkdtemp(join(tmpdir(), "videoscrub-")), "tone.mp4");
   await $`ffmpeg -v error -f lavfi -i sine=frequency=440:duration=6 -f lavfi -i color=black:s=160x90:r=10:d=6 -shortest -pix_fmt yuv420p ${file}`.quiet();
   const v = await open(file);
   delete process.env.OPENAI_API_KEY;

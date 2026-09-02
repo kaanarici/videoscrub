@@ -7,8 +7,8 @@ import { hms, open } from "./video";
 
 let file: string;
 beforeAll(async () => {
-  process.env.XDG_CACHE_HOME = await mkdtemp(join(tmpdir(), "video-tool-cache-"));
-  file = join(await mkdtemp(join(tmpdir(), "video-tool-")), "clip.mp4");
+  process.env.XDG_CACHE_HOME = await mkdtemp(join(tmpdir(), "videoscrub-cache-"));
+  file = join(await mkdtemp(join(tmpdir(), "videoscrub-")), "clip.mp4");
   await $`ffmpeg -v error -f lavfi -i testsrc2=size=640x360:rate=10:duration=12 -pix_fmt yuv420p ${file}`.quiet();
 });
 

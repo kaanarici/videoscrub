@@ -1,0 +1,5 @@
+{
+  "name": "videoscrub",
+  "owner": { "name": "Kaan Aricioglu", "url": "https://github.com/kaanarici" },
+  "plugins": [{ "name": "videoscrub", "source": "./", "description": "Agentic video understanding for coding agents: transcript, motion, and frames on demand" }]
+}

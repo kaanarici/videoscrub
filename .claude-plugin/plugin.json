@@ -1,0 +1,13 @@
+{
+  "name": "videoscrub",
+  "version": "0.1.0",
+  "description": "Agentic video understanding for coding agents: transcript, motion, and frames on demand",
+  "author": { "name": "Kaan Aricioglu", "url": "https://github.com/kaanarici" },
+  "homepage": "https://github.com/kaanarici/videoscrub",
+  "repository": "https://github.com/kaanarici/videoscrub",
+  "license": "MIT",
+  "keywords": ["video", "mcp", "agentic", "youtube", "ffmpeg"],
+  "mcpServers": {
+    "videoscrub": { "command": "bun", "args": ["run", "${CLAUDE_PLUGIN_ROOT}/src/server.ts"] }
+  }
+}

@@ -11,7 +11,7 @@ const start_s = z.number().min(0).describe("Range start in seconds");
 const end_s = z.number().min(0).describe("Range end in seconds");
 const annotations = { readOnlyHint: true };
 const text = (t: string) => ({ content: [{ type: "text" as const, text: t }] });
-const server = new McpServer({ name: "video", version: "0.1.0" });
+const server = new McpServer({ name: "videoscrub", version: "0.1.0" });
 
 server.registerTool(
   "video_info",

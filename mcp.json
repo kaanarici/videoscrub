@@ -1,5 +1,6 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
   "mcpServers": {
-    "video": { "command": "bun", "args": ["run", "src/server.ts"] }
+    "videoscrub": { "type": "stdio", "command": "bun", "args": ["run", "${PLUGIN_ROOT}/src/server.ts"] }
   }
 }

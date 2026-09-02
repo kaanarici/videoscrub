@@ -1,10 +1,13 @@
 {
-  "name": "video-tool",
+  "name": "videoscrub",
   "version": "0.1.0",
-  "description": "Agentic video understanding for any MCP host: transcript, motion, and frames at a chosen fps, loaded on demand",
+  "description": "Agentic video understanding for coding agents: transcript, motion, and frames on demand",
+  "license": "MIT",
+  "homepage": "https://github.com/kaanarici/videoscrub",
+  "repository": "github:kaanarici/videoscrub",
   "type": "module",
-  "bin": { "video-tool": "src/server.ts" },
-  "files": ["src", "mcp.json"],
+  "bin": { "videoscrub": "src/server.ts" },
+  "files": ["src", "plugin.json", "mcp.json", ".claude-plugin"],
   "scripts": {
     "start": "bun run src/server.ts",
     "typecheck": "bunx tsc --noEmit",

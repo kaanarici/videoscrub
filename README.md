@@ -1,4 +1,4 @@
-# video-tool
+# videoscrub
 
 Agentic video understanding for any agent that speaks MCP. Instead of feeding a whole video into a model at a fixed frame rate, the model gets four tools and decides what to watch: it searches the transcript, reads a motion timeline to find where things happen, scans a range at low fps, then re-samples a narrow window at high fps and higher resolution to pin a moment, count an action, or read a detail. This is the same loop Google ships as `processing: "agentic"` for Gemini, but it runs on whatever model your host uses (Claude Code, Codex, Gemini CLI, Cursor).
 
@@ -9,31 +9,23 @@ Agentic video understanding for any agent that speaks MCP. Instead of feeding a 
 - `yt-dlp` for URLs
 - An OpenAI-compatible transcription API key for videos without captions (optional)
 
-## Run
+## Install
+
+Claude Code, as a plugin:
 
 ```bash
-bun install
+claude plugin marketplace add kaanarici/videoscrub
+claude plugin install videoscrub@videoscrub
 ```
 
-Claude Code, one-off:
+Claude Code or Codex, as a plain MCP server from a clone:
 
 ```bash
-claude --mcp-config mcp.json "What is announced at the start of chapter 3 in https://youtu.be/7Z5Vy9JBANs?"
+claude mcp add videoscrub -- bun run /path/to/videoscrub/src/server.ts
+codex mcp add videoscrub -- bun run /path/to/videoscrub/src/server.ts
 ```
 
-Claude Code, permanent:
-
-```bash
-claude mcp add video -- bun run /path/to/video-tool/src/server.ts
-```
-
-Codex:
-
-```bash
-codex mcp add video -- bun run /path/to/video-tool/src/server.ts
-```
-
-Any other MCP host: command `bun`, args `run /path/to/video-tool/src/server.ts`.
+The repo is also an [Agent Plugins](https://agent-plugins.org) package, so clients that support that format install it from the git URL. Any other MCP host: command `bun`, args `run /path/to/videoscrub/src/server.ts`. Bun fetches the two dependencies on first run, so there is no install step.
 
 Codex gives each tool call 60 seconds by default. The first call on a long video downloads it, so raise `mcp_servers.video.tool_timeout_sec` in `~/.codex/config.toml` if that is too tight.
 
@@ -46,7 +38,7 @@ Codex gives each tool call 60 seconds by default. The first call on a long video
 | `motion` | `source`, `start_s`, `end_s` | up to 240 numbers, one per time bucket, giving the largest frame-to-frame change in that bucket |
 | `frames` | `source`, `start_s`, `end_s`, `fps` (default 1), `width` (default 320) | contact sheets of sampled frames plus a text line giving each tile's timestamp |
 
-`source` is a local path or an http(s) URL. Remote videos are downloaded once at up to 720p into `~/.cache/video-tool/` together with their captions.
+`source` is a local path or an http(s) URL. Remote videos are downloaded once at up to 720p into `~/.cache/videoscrub/` together with their captions.
 
 `transcript` uses captions when the video has them. Otherwise the first call encodes the audio to 24 kbps mono mp3, posts it to an OpenAI-compatible transcription endpoint, and caches the timestamped segments. Set `OPENAI_API_KEY` in the server's environment. The default is OpenAI's `whisper-1`, the OpenAI model that returns segment timestamps. For Groq set `OPENAI_BASE_URL=https://api.groq.com/openai/v1` and `TRANSCRIBE_MODEL=whisper-large-v3-turbo`; OpenRouter works the same way with its base URL. Files are capped at 25 MB, about two hours of audio. Without a key, `video_info` reports the transcript as unavailable and names the variable.
 

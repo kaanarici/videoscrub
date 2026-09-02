@@ -3,15 +3,13 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "video-tool",
+      "name": "videoscrub",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.30.0",
         "zod": "^4.5.4",
       },
       "devDependencies": {
-        "@types/bun": "latest",
-      },
-      "peerDependencies": {
+        "@types/bun": "^1.4.0",
         "typescript": "^7",
       },
     },

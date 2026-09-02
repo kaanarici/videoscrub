@@ -4,7 +4,7 @@ import { mkdir, readdir, readFile, realpath, stat } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
 
-export const cache = () => join(process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache"), "video-tool");
+export const cache = () => join(process.env.XDG_CACHE_HOME ?? join(homedir(), ".cache"), "videoscrub");
 const FORMAT = "bv*[height<=720][ext=mp4]+ba[ext=m4a]/b[height<=720]/b";
 
 export type Line = { t: number; text: string };

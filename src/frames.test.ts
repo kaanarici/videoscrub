@@ -8,8 +8,8 @@ import { open, type Video } from "./video";
 
 let clip: Video;
 beforeAll(async () => {
-  process.env.XDG_CACHE_HOME = await mkdtemp(join(tmpdir(), "video-tool-cache-"));
-  const file = join(await mkdtemp(join(tmpdir(), "video-tool-")), "motion.mp4");
+  process.env.XDG_CACHE_HOME = await mkdtemp(join(tmpdir(), "videoscrub-cache-"));
+  const file = join(await mkdtemp(join(tmpdir(), "videoscrub-")), "motion.mp4");
   const box = "overlay=x='if(between(t,5,10),mod(floor(t*2),4)*60,0)':y=50:eval=frame";
   const flash = "drawbox=c=white:t=fill:enable='eq(n,369)'";
   const cut = "drawbox=c=gray:t=fill:enable='gte(t,15)'";
