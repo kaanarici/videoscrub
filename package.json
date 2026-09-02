@@ -1,0 +1,22 @@
+{
+  "name": "video-tool",
+  "version": "0.1.0",
+  "description": "Agentic video understanding for any MCP host: transcript, motion, and frames at a chosen fps, loaded on demand",
+  "type": "module",
+  "bin": { "video-tool": "src/server.ts" },
+  "files": ["src", "mcp.json"],
+  "scripts": {
+    "start": "bun run src/server.ts",
+    "typecheck": "bunx tsc --noEmit",
+    "test": "bun test",
+    "check": "bun run typecheck && bun test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.0",
+    "typescript": "^7"
+  }
+}

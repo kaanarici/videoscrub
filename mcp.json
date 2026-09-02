@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "video": { "command": "bun", "args": ["run", "src/server.ts"] }
+  }
+}
