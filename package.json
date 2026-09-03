@@ -6,7 +6,9 @@
   "homepage": "https://github.com/kaanarici/videoscrub",
   "repository": "github:kaanarici/videoscrub",
   "type": "module",
-  "bin": { "videoscrub": "src/server.ts" },
+  "bin": {
+    "videoscrub": "src/server.ts"
+  },
   "files": ["src", "plugin.json", "mcp.json", ".claude-plugin"],
   "scripts": {
     "start": "bun run src/server.ts",
@@ -16,6 +18,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
+    "jimp": "^1.6.1",
     "zod": "^4.5.4"
   },
   "devDependencies": {

@@ -1,12 +1,17 @@
 import { $ } from "bun";
+import { Jimp, loadFont } from "jimp";
+import { SANS_16_WHITE } from "jimp/fonts";
 import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { cache, hms, type Video } from "./video";
 
 export const MAX_FRAMES = 48;
 export const MAX_MOTION_SECONDS = 600;
 const SHEET_WIDTH = 1280;
+const GAP = 4;
 const BUCKETS = 240;
+let font: ReturnType<typeof loadFont> | undefined;
 
 function clampRange(video: Video, start: number, end: number) {
   start = Math.max(0, start);
@@ -24,18 +29,33 @@ export async function frames(video: Video, start: number, end: number, fps: numb
   const perSheet = cols * cols;
   const tmp = await mkdtemp(join(cache(), "tmp-"));
   try {
-    const filter = `fps=${fps},scale=${width}:-2,tile=${cols}x${cols}:padding=4:margin=4:color=white`;
+    const filter = `fps=${fps},scale=${width}:-2,tile=${cols}x${cols}:padding=${GAP}:margin=${GAP}:color=white`;
     await $`ffmpeg -v error -ss ${start} -to ${end} -i ${video.file} -vf ${filter} -frames:v ${Math.ceil(count / perSheet)} -q:v 4 ${join(tmp, "%03d.jpg")}`.quiet();
-    const sheets = await Promise.all((await readdir(tmp)).sort().map((f) => readFile(join(tmp, f))));
-    const times = Array.from({ length: count }, (_, i) => `#${i + 1} ${hms(start + i / fps, fps > 10 ? 2 : 1)}`);
+    const files = (await readdir(tmp)).sort();
+    const decimals = fps > 10 ? 2 : 1;
+    const labels = Array.from({ length: count }, (_, i) => hms(start + i / fps, decimals));
+    const sheets = await Promise.all(files.map((f, s) => label(join(tmp, f), labels.slice(s * perSheet, (s + 1) * perSheet), cols, width)));
     const header = [
-      `${count} frames from ${hms(start)} to ${hms(end)} at ${fps} fps, ${width}px wide, on ${sheets.length} sheet(s) of ${cols}x${cols} tiles.`,
-      `Tiles are numbered row by row, continuing across sheets; unused tiles are blank. Tile times: ${times.join(", ")}.`,
+      `${count} frames from ${hms(start)} to ${hms(end)} at ${fps} fps, ${width}px wide, on ${sheets.length} sheet(s) of ${cols}x${cols} tiles, each tile labeled with its time.`,
+      `Tiles are numbered row by row, continuing across sheets; unused tiles are blank. Tile times: ${labels.map((t, i) => `#${i + 1} ${t}`).join(", ")}.`,
     ].join("\n");
     return { header, sheets };
   } finally {
     await rm(tmp, { recursive: true, force: true });
   }
+}
+
+async function label(file: string, texts: string[], cols: number, width: number) {
+  font ??= loadFont(pathToFileURL(SANS_16_WHITE).href);
+  const [sheet, fnt] = await Promise.all([Jimp.read(file), font]);
+  const height = (sheet.height - 2 * GAP - (cols - 1) * GAP) / cols;
+  texts.forEach((text, i) => {
+    const x = GAP + (i % cols) * (width + GAP);
+    const y = GAP + Math.floor(i / cols) * (height + GAP);
+    sheet.composite(new Jimp({ width: 9 * text.length + 8, height: 20, color: 0x000000e0 }), x, y);
+    sheet.print({ font: fnt, x: x + 4, y: y + 1, text });
+  });
+  return sheet.getBuffer("image/jpeg", { quality: 85 });
 }
 
 export async function motion(video: Video, start: number, end: number) {

@@ -1,4 +1,5 @@
 import { $ } from "bun";
+import { Jimp } from "jimp";
 import { beforeAll, expect, test } from "bun:test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -23,6 +24,12 @@ test("frames tiles a range and lists each tile's time", async () => {
   expect(header).toContain("4 frames from 0:02.0 to 0:06.0 at 1 fps, 320px wide, on 1 sheet(s) of 4x4 tiles");
   expect(header).toContain("#1 0:02.0, #2 0:03.0, #3 0:04.0, #4 0:05.0");
   expect(sheets[0]!.subarray(0, 2)).toEqual(Buffer.from([0xff, 0xd8]));
+  const sheet = await Jimp.read(sheets[0]!);
+  expect([sheet.width, sheet.height]).toEqual([1300, 740]);
+  const dark = (x: number, y: number) => (sheet.getPixelColor(x, y) >>> 8) & 0xff;
+  expect(dark(6, 6)).toBeLessThan(40);
+  expect(dark(6 + 324, 6)).toBeLessThan(40);
+  expect(dark(6 + 3 * 324, 6 + 184)).toBeGreaterThan(200);
 });
 
 test("frames spans sheets at full width, caps fps at the source rate, and refuses oversize requests", async () => {
