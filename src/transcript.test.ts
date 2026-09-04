@@ -3,7 +3,7 @@ import { afterAll, expect, test } from "bun:test";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { format, lines, status } from "./transcript";
+import { format, lines, MAX_TRANSCRIPT_CHARS, status } from "./transcript";
 import { open, type Video } from "./video";
 
 const spoken = Array.from({ length: 10 }, (_, i) => ({ t: i * 10, text: i === 5 ? "the needle is here" : `line ${i}` }));
@@ -20,11 +20,27 @@ const api = Bun.serve({
 afterAll(() => api.stop());
 
 test("format filters by range and by query with context", () => {
-  expect(format(spoken, 0, 20)).toBe("[0:00.0] line 0\n[0:10.0] line 1\n[0:20.0] line 2");
-  expect(format(spoken, undefined, undefined, "NEEDLE")).toBe(
+  expect(format(spoken, 0, 20).text).toBe("[0:00.0] line 0\n[0:10.0] line 1\n[0:20.0] line 2");
+  expect(format(spoken, undefined, undefined, "NEEDLE").text).toBe(
     "[0:30.0] line 3\n[0:40.0] line 4\n[0:50.0] the needle is here\n[1:00.0] line 6\n[1:10.0] line 7",
   );
-  expect(format(spoken, 0, 100, "missing")).toBe("No transcript lines match.");
+  expect(format(spoken, 0, 100, "missing").text).toBe("No transcript lines match.");
+});
+
+test("pages preserve oversized lines, repeated timestamps, and search context", () => {
+  const long = Array.from({ length: 400 }, (_, i) => ({ t: 0, text: `${i} ${"x".repeat(i === 0 ? 16_000 : 80)}` }));
+  const expected = long.map((l) => `[0:00.0] ${l.text}`).join("\n");
+  let offset = 0;
+  let complete = "";
+  for (;;) {
+    const page = format(long, undefined, undefined, "x", offset);
+    expect(page.text.length).toBeLessThanOrEqual(MAX_TRANSCRIPT_CHARS);
+    complete += page.text;
+    if (page.nextOffset === undefined) break;
+    expect(page.nextOffset).toBeGreaterThan(offset);
+    offset = page.nextOffset;
+  }
+  expect(complete).toBe(expected);
 });
 
 test("captions win and a silent video has no transcript", async () => {
@@ -49,7 +65,7 @@ test("the API transcribes a video once, caches the lines, and needs a key", asyn
   process.env.TRANSCRIBE_MODEL = "whisper-large-v3-turbo";
   expect(await status(v)).toStartWith("api");
   const expected = [{ t: 0.5, text: "hello" }, { t: 3.25, text: "world" }];
-  expect(await Promise.all([lines(v), lines(v)])).toEqual([{ status: "ready", lines: expected }, { status: "ready", lines: expected }]);
+  expect(await lines(v)).toEqual({ status: "ready", lines: expected });
   expect(requests).toEqual([{ model: "whisper-large-v3-turbo", format: "verbose_json", bytes: expect.any(Number), auth: "Bearer test-key" }]);
   expect(requests[0]!.bytes).toBeGreaterThan(10_000);
   expect(await status(v)).toBe("ready");

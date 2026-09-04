@@ -25,9 +25,21 @@ test("open rejects sources that are neither files nor URLs", async () => {
   await expect(open("/nope/missing.mp4")).rejects.toThrow("not a file or http(s) URL");
 });
 
+test("replacing a local source invalidates metadata and derived cache", async () => {
+  const source = join(await mkdtemp(join(tmpdir(), "videoscrub-")), "replace.mp4");
+  await $`ffmpeg -v error -f lavfi -i color=black:s=160x90:r=10:d=1 -pix_fmt yuv420p ${source}`.quiet();
+  const before = await open(source);
+  await $`ffmpeg -y -v error -f lavfi -i color=white:s=320x180:r=10:d=2 -pix_fmt yuv420p ${source}`.quiet();
+  const after = await open(source);
+  expect(after.duration).toBe(2);
+  expect(after.width).toBe(320);
+  expect(after.dir).not.toBe(before.dir);
+});
+
 test("hms formats seconds", () => {
   expect(hms(0)).toBe("0:00.0");
   expect(hms(65.26)).toBe("1:05.3");
   expect(hms(3661)).toBe("1:01:01.0");
   expect(hms(27.4667, 2)).toBe("0:27.47");
+  expect(hms(59.999, 1)).toBe("1:00.0");
 });

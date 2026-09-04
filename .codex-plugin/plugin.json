@@ -1,0 +1,19 @@
+{
+  "name": "videoscrub",
+  "version": "0.2.0",
+  "description": "Ask your coding agent questions about a video file or link.",
+  "author": { "name": "Kaan Aricioglu" },
+  "skills": "./skills/",
+  "mcpServers": {
+    "videoscrub": { "command": "bun", "args": ["run", "${PLUGIN_ROOT}/src/server.ts"] }
+  },
+  "interface": {
+    "displayName": "videoscrub",
+    "shortDescription": "Ask questions about local videos and video links",
+    "longDescription": "Inspect frames, find moments, and search captions. Give your agent a video file or link and ask a question.",
+    "developerName": "Kaan Aricioglu",
+    "category": "Productivity",
+    "capabilities": ["Read"],
+    "defaultPrompt": ["What happens in this video?"]
+  }
+}

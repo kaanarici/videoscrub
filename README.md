@@ -1,57 +1,104 @@
 # videoscrub
 
-MCP server that lets a coding agent work through a video on demand: search the transcript, read a motion timeline, sample frames from a time range at a chosen frame rate, and zoom into a window at a higher rate. Works with any MCP host and any model with image input.
+Ask your coding agent questions about a video.
 
-## Requirements
+Give it a local file or a video link. videoscrub lets the agent inspect frames, find moments, and search captions. It works with Codex, Claude Code, and other MCP hosts that support image input.
 
-- Bun
-- ffmpeg and ffprobe
-- yt-dlp for URLs
-- An OpenAI-compatible transcription API key for videos without captions (optional)
+> "When does the presenter open the settings panel?"
+>
+> "What changes between the beginning and end of this recording?"
+>
+> "How many times does the indicator turn on? Give me the timestamps."
+
+Your agent chooses what to inspect. You do not need to pick frame rates or learn the tools.
 
 ## Install
 
-Claude Code plugin:
+Install [Bun](https://bun.sh), [ffmpeg](https://ffmpeg.org/download.html), and [yt-dlp](https://github.com/yt-dlp/yt-dlp#installation). ffmpeg includes ffprobe. You only need yt-dlp for video links.
 
-```bash
+On macOS with Homebrew, install the video tools with:
+
+```sh
+brew install ffmpeg yt-dlp
+```
+
+### Codex
+
+```sh
+codex plugin marketplace add kaanarici/videoscrub
+codex plugin add videoscrub@videoscrub
+```
+
+### Claude Code
+
+```sh
 claude plugin marketplace add kaanarici/videoscrub
 claude plugin install videoscrub@videoscrub
 ```
 
-Claude Code or Codex from a clone:
+Start a new session after installation. Then ask a question and include the video's path or URL. Bun installs the plugin's dependencies on first use.
 
-```bash
-claude mcp add videoscrub -- bun run /path/to/videoscrub/src/server.ts
-codex mcp add videoscrub -- bun run /path/to/videoscrub/src/server.ts
+### Other MCP hosts
+
+Clone the repository and install its dependencies:
+
+```sh
+git clone https://github.com/kaanarici/videoscrub.git
+cd videoscrub
+bun install --frozen-lockfile
 ```
 
-Other hosts: command `bun`, args `run /path/to/videoscrub/src/server.ts`. The repo follows the Agent Plugins format (`plugin.json`, `mcp.json`). Bun installs the dependencies on first run.
+Add this server to your host's MCP configuration. Replace the path with the absolute path to your clone.
 
-Codex allows 60 seconds per tool call by default. The first call on a long video downloads it. Raise `mcp_servers.videoscrub.tool_timeout_sec` in `~/.codex/config.toml` if needed.
-
-## Tools
-
-| Tool | Input | Output |
-| --- | --- | --- |
-| `video_info` | `source` | title, duration, dimensions, fps, chapters, transcript status |
-| `transcript` | `source`, optional `start_s`, `end_s`, `query` | timestamped lines; `query` returns matching lines with 2 lines of context |
-| `motion` | `source`, `start_s`, `end_s` | up to 240 numbers, one per time bucket: the largest frame-to-frame luma change in that bucket |
-| `frames` | `source`, `start_s`, `end_s`, `fps` (default 1), `width` (default 320) | contact sheets of sampled frames, each frame labeled with its timestamp |
-
-`source` is a local path or an http(s) URL. Remote videos are downloaded once at up to 720p, with captions, into `~/.cache/videoscrub/`.
-
-## Details
-
-Transcript: captions when the video has them. Otherwise the first call encodes the audio to 24 kbps mono mp3, posts it to `OPENAI_BASE_URL` (default `https://api.openai.com/v1`) at `/audio/transcriptions` with `TRANSCRIBE_MODEL` (default `whisper-1`), and caches the segments. Groq: `OPENAI_BASE_URL=https://api.groq.com/openai/v1`, `TRANSCRIBE_MODEL=whisper-large-v3-turbo`. OpenRouter: its base URL. Audio over 25 MB, about two hours, is rejected. Without `OPENAI_API_KEY`, `video_info` reports the transcript as unavailable.
-
-Motion: every source frame in the range is compared with the previous one at 64 px wide. Values are 0 to 255. Repeated actions appear as periodic bumps, cuts and flashes as isolated spikes, camera movement as a raised floor. Limit 600 seconds per call. About 600 tokens.
-
-Frames: one ffmpeg command samples, scales, and tiles. Limit 48 frames per call; fps is capped at the video's rate. Width 320 gives 16 frames per 1280 px sheet, about 1,200 input tokens. Width 640 gives 4 per sheet, width 1280 one. The text part lists each tile's timestamp as well.
-
-No audio tool. Speech reaches the model as text.
-
-## Development
-
-```bash
-bun run check
+```json
+{
+	"mcpServers": {
+		"videoscrub": {
+			"command": "bun",
+			"args": ["run", "/absolute/path/to/videoscrub/src/server.ts"]
+		}
+	}
+}
 ```
+
+This registers the tools. The [bundled skill](skills/analyze-video/SKILL.md) is also available for hosts that support skills.
+
+## What to expect
+
+No extra API key is needed to inspect frames or read available captions. Your existing agent interprets the images and text; videoscrub does not run another reasoning model.
+
+Videos without captions need an optional [speech transcription service](docs/reference.md#speech-transcription) for spoken content. Music and other sounds are not supported.
+
+Brief events can fall between sampled frames. Your agent can inspect a shorter interval at a higher frame rate, but accuracy still depends on the model and the evidence it requests.
+
+Video links must be accessible to yt-dlp. Login requirements and site restrictions still apply. Long downloads may need a longer tool timeout in your host.
+
+Frames and transcript text go to your agent's model. If you enable speech transcription, audio also goes to your configured transcription provider. Downloads and transcripts are cached locally.
+
+## Update
+
+For Codex:
+
+```sh
+codex plugin marketplace upgrade videoscrub
+codex plugin add videoscrub@videoscrub
+```
+
+For Claude Code:
+
+```sh
+claude plugin marketplace update videoscrub
+claude plugin update videoscrub@videoscrub
+```
+
+For a Git clone, run `git pull --ff-only` and `bun install --frozen-lockfile`. Restart your agent session after updating.
+
+See [releases](https://github.com/kaanarici/videoscrub/releases) for changes and upgrade notes.
+
+## Contribute
+
+Run `bun install --frozen-lockfile`, then `bun run check`. The suite checks types and exercises the MCP server with generated videos and a mock transcription service. No API key is needed.
+
+[Issues](https://github.com/kaanarici/videoscrub/issues) and pull requests are welcome. For a bug report, include your host, operating system, error, and a shareable clip or reproduction steps.
+
+See the [tool reference](docs/reference.md) for parameters, limits, and cache behavior. MIT licensed.

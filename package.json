@@ -1,7 +1,7 @@
 {
   "name": "videoscrub",
-  "version": "0.1.0",
-  "description": "Agentic video understanding for coding agents: transcript, motion, and frames on demand",
+  "version": "0.2.0",
+  "description": "Ask your coding agent questions about a video file or link.",
   "license": "MIT",
   "homepage": "https://github.com/kaanarici/videoscrub",
   "repository": "github:kaanarici/videoscrub",
@@ -9,7 +9,7 @@
   "bin": {
     "videoscrub": "src/server.ts"
   },
-  "files": ["src", "plugin.json", "mcp.json", ".claude-plugin"],
+  "files": ["src", "!src/*.test.ts", "skills", "docs", "plugin.json", "mcp.json", ".claude-plugin", ".codex-plugin"],
   "scripts": {
     "start": "bun run src/server.ts",
     "typecheck": "bunx tsc --noEmit",
